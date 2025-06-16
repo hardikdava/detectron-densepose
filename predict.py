@@ -151,63 +151,18 @@ class Predictor(BasePredictor):
         }
         tempdir = tempfile.mkdtemp()
         # Check if input is image or video using the file mimetype
-        mimetype, _ = mimetypes.guess_type(str(input))
-        if mimetype and mimetype.startswith("image/"):
-            # We have an image
-            in_path = os.path.join(tempdir, "image.png")
-            out_path = os.path.join(tempdir, "image_dp_segm.png")
-            shutil.copy(input, in_path)
-            im = cv2.imread(in_path)
-            out = densepose(
-                im,
-                self.predictor,
-                visualizer_map[visualizer],
-                base_image=(im if overlay else None),
-            )
-            cv2.imwrite(out_path, out)
-            return Path(out_path)
-        elif mimetype and mimetype.startswith("video/"):
-            # We have a video
-            in_path = os.path.join(tempdir, "input_video.mp4")
-            out_path = os.path.join(tempdir, "video_dp_segm.mp4")
-            shutil.copy(input, in_path)
-            container = av.open(in_path)
-            stream = container.streams.video[0]
-            with av.open(out_path, mode="w") as target_container:
-                stream_out = target_container.add_stream("mpeg4", rate=25)
-                stream_out.width = stream.width
-                stream_out.height = stream.height
-                for frame in container.decode(stream):
-                    pil_image = frame.to_image()
-                    cv2_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-                    out = densepose(
-                        cv2_image,
-                        self.predictor,
-                        visualizer_map[visualizer],
-                        base_image=(cv2_image if overlay else None),
-                    )
-                    out_frame = av.VideoFrame.from_ndarray(out, format="bgr24")
-                    for packet in stream_out.encode(out_frame):
-                        target_container.mux(packet)
-            # Re-encode the video to a widely compatible format using ffmpeg
-            reencoded_out_path = out_path + ".reencoded.mp4"
-            subprocess.check_output(
-                [
-                    "ffmpeg",
-                    "-i",
-                    str(out_path),
-                    "-c:v",
-                    "libx264",
-                    "-preset",
-                    "slow",
-                    "-crf",
-                    "22",
-                    "-pix_fmt",
-                    "yuv420p",
-                    str(reencoded_out_path),
-                ]
-            )
-            shutil.move(reencoded_out_path, out_path)
-            return Path(out_path)
-        else:
-            raise ValueError("Input must be an image or video")
+       
+        # We have an image
+        in_path = os.path.join(tempdir, "image.png")
+        out_path = os.path.join(tempdir, "image_dp_segm.png")
+        shutil.copy(input, in_path)
+        im = cv2.imread(in_path)
+        out = densepose(
+            im,
+            self.predictor,
+            visualizer_map[visualizer],
+            base_image=(im if overlay else None),
+        )
+        cv2.imwrite(out_path, out)
+        return Path(out_path)
+      
